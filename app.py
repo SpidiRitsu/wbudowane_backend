@@ -4,6 +4,7 @@ from flask_marshmallow import Marshmallow
 import paho.mqtt.client as mqtt
 import datetime
 import os
+import json
 
 # Init app
 app = Flask(__name__)
@@ -37,12 +38,12 @@ class Temperature(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	value = db.Column(db.Float)
 	room = db.Column(db.String)
-	date = db.Column(db.DateTime)
+	date = db.Column(db.String)
 
 	def __init__(self, value, room):
 		self.value = value
 		self.room = room
-		self.date = datetime.datetime.now()
+		self.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 class TemperatureSchema(ma.Schema):
 	class Meta:
@@ -54,12 +55,12 @@ class Humidity(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	value = db.Column(db.Float)
 	room = db.Column(db.String)
-	date = db.Column(db.DateTime)
+	date = db.Column(db.String)
 
 	def __init__(self, value, room):
 		self.value = value
 		self.room = room
-		self.date = datetime.datetime.now()
+		self.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 class HumiditySchema(ma.Schema):
 	class Meta:
@@ -71,12 +72,12 @@ class Luminosity(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	value = db.Column(db.Float)
 	room = db.Column(db.String)
-	date = db.Column(db.DateTime)
+	date = db.Column(db.String)
 
 	def __init__(self, value, room):
 		self.value = value
 		self.room = room
-		self.date = datetime.datetime.now()
+		self.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 class LuminositySchema(ma.Schema):
 	class Meta:
@@ -138,21 +139,51 @@ def add_luminosity():
 # GETS
 @app.route('/get_temperature', methods=['GET'])
 def get_temperature():
-	temperature = Temperature.query.all()
+	params = request.query_string.decode().split('=')
+	params = dict(zip(*[iter(params)]*2))
+	if params and (params['room'] == "1" or params['room'] == "2" or params['room'] == "3"):
+		temperature = Temperature.query.filter(Temperature.room == f"Room{params['room']}").order_by(Temperature.id.desc()).limit(10)
+	else:
+		temperature = Temperature.query.order_by(Temperature.id.desc()).limit(10)
 	result = temperature_schemas.dump(temperature)
-	return jsonify(result.data)
+	data = {
+		"date": [temp['date'].split(' ')[1] for temp in result.data][::-1],
+		"value": [temp['value'] for temp in result.data][::-1]
+	}
+	return json.dumps(data);
 
 @app.route('/get_humidity', methods=['GET'])
 def get_humidity():
-	humidity = Humidity.query.all()
+	params = request.query_string.decode().split('=')
+	params = dict(zip(*[iter(params)]*2))
+	if params and (params['room'] == "1" or params['room'] == "2" or params['room'] == "3"):
+		humidity = Humidity.query.filter(Humidity.room == f"Room{params['room']}").order_by(Humidity.id.desc()).limit(10)
+	else:
+		humidity = Humidity.query.order_by(Humidity.id.desc()).limit(10)
 	result = humidity_schemas.dump(humidity)
-	return jsonify(result.data)
+	print(result)
+	# return jsonify(result.data)
+	data = {
+		"date": [temp['date'].split(' ')[1] for temp in result.data][::-1],
+		"value": [temp['value'] for temp in result.data][::-1]
+	}
+	return json.dumps(data);
 
 @app.route('/get_luminosity', methods=['GET'])
 def get_luminosity():
-	luminosity = Luminosity.query.all()
+	params = request.query_string.decode().split('=')
+	params = dict(zip(*[iter(params)]*2))
+	if params and (params['room'] == "1" or params['room'] == "2" or params['room'] == "3"):
+		luminosity = Luminosity.query.filter(Luminosity.room == f"Room{params['room']}").order_by(Luminosity.id.desc()).limit(10)
+	else:
+		luminosity = Luminosity.query.order_by(Luminosity.id.desc()).limit(10)
 	result = luminosity_schemas.dump(luminosity)
-	return jsonify(result.data)
+	# return jsonify(result.data)
+	data = {
+		"date": [temp['date'].split(' ')[1] for temp in result.data][::-1],
+		"value": [temp['value'] for temp in result.data][::-1]
+	}
+	return json.dumps(data);
 
 # RELAYS
 @app.route('/relay/<room>/<relay>/<state>', methods=['GET'])
