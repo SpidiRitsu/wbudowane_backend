@@ -6,12 +6,15 @@ import requests
 broker_address = "spodo.pl"
 broker_portno = 1883
 client = mqtt.Client()
-client.connect(broker_address, broker_portno)
+# client.connect(broker_address, broker_portno)
+client.connect_async(broker_address, broker_portno)
 
 # Out
 channels = ['Room1', 'Room1_1', 'Room2', 'Room2_2', 'Room3', 'Room3_3']
 
 # Routes
+sensors = ['T', 'H', 'L']
+
 routes = {
 	"T": "temperature",
 	"H": "humidity",
@@ -43,4 +46,9 @@ client.on_connect = on_connect
 client.on_message = on_message
 # client.message_callback_add('Room1', on_message)
 
-client.loop_forever()
+# client.loop_forever()
+client.loop_start()
+# for i in range(100):
+	# print('WTF NIGGA')
+while True:
+	pass

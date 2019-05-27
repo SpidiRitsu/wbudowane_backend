@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6b7437741fe386c95ea871e8206e3c4756ba3481bf5efb212241d2e3fdec5a4f"
+            "sha256": "ace30ddfad3edd99806aba2da6851d92d2cad4c7f7354dfe2d1c7d18df855461"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -52,6 +52,14 @@
             ],
             "index": "pypi",
             "version": "==0.10.1"
+        },
+        "flask-socketio": {
+            "hashes": [
+                "sha256:841dc9636fcf0659223745434b7ceef56f716fede2311ec26cb97af30648ca22",
+                "sha256:f44b2fc91149c1b2b522c8fd64824d10d4e38d535c2cb76623c22b1e9eeb9de9"
+            ],
+            "index": "pypi",
+            "version": "==4.0.0"
         },
         "flask-sqlalchemy": {
             "hashes": [
@@ -137,6 +145,20 @@
             "index": "pypi",
             "version": "==1.4.0"
         },
+        "python-engineio": {
+            "hashes": [
+                "sha256:06bd817c0ea50df62e0ea31b89f427ba4ef6f954e09cb0f9036bcfce8193e304",
+                "sha256:0886831a4ce9f0e8293b927c4b8e4a3dc6dba4a55830abb9c170b12b34d453e9"
+            ],
+            "version": "==3.6.0"
+        },
+        "python-socketio": {
+            "hashes": [
+                "sha256:80810f40a5b276937a95d4944229fa9c20ee61963365387549fd943589661a6f",
+                "sha256:c128d320b23ce3c4323ca5b0e20f602a075ceea56f368f6b9f52bed48d97df71"
+            ],
+            "version": "==4.0.3"
+        },
         "requests": {
             "hashes": [
                 "sha256:11e007a8a2aa0323f5a921e9e6a2d7e4e67d9877e85773fba9ba6419025cbeb4",
@@ -160,10 +182,10 @@
         },
         "urllib3": {
             "hashes": [
-                "sha256:a53063d8b9210a7bdec15e7b272776b9d42b2fd6816401a0d43006ad2f9902db",
-                "sha256:d363e3607d8de0c220d31950a8f38b18d5ba7c0830facd71a1c6b1036b7ce06c"
+                "sha256:b246607a25ac80bedac05c6f282e3cdaf3afb65420fd024ac94435cabe6e18d1",
+                "sha256:dbe59173209418ae49d485b87d1681aefa36252ee85884c31346debd19463232"
             ],
-            "version": "==1.25.2"
+            "version": "==1.25.3"
         },
         "werkzeug": {
             "hashes": [
