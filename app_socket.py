@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, send, emit
 import paho.mqtt.client as mqtt
 import datetime
@@ -16,6 +17,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 socketio = SocketIO(app)
 # Init db
 db = SQLAlchemy(app)
+# Init ma
+ma = Marshmallow(app)
 # MQTT
 broker_address = "spodo.pl"
 broker_portno = 1883
@@ -38,6 +41,10 @@ class Temperature(db.Model):
 		self.room = room
 		self.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+class TemperatureSchema(ma.Schema):
+	class Meta:
+		fields = ('id', 'value', 'room', 'date')
+
 class Humidity(db.Model):
 	__tablename__ = "humidity"
 
@@ -51,6 +58,10 @@ class Humidity(db.Model):
 		self.room = room
 		self.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+class HumiditySchema(ma.Schema):
+	class Meta:
+		fields = ('id', 'value', 'room', 'date')
+
 class Luminosity(db.Model):
 	__tablename__ = "luminosity"
 
@@ -63,6 +74,17 @@ class Luminosity(db.Model):
 		self.value = value
 		self.room = room
 		self.date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+class LuminositySchema(ma.Schema):
+	class Meta:
+		fields = ('id', 'value', 'room', 'date')
+
+temperature_schema = TemperatureSchema(strict=True)
+temperature_schemas = TemperatureSchema(many=True, strict=True)
+humidity_schema = HumiditySchema(strict=True)
+humidity_schemas = HumiditySchema(many=True, strict=True)
+luminosity_schema = LuminositySchema(strict=True)
+luminosity_schemas = LuminositySchema(many=True, strict=True)
 
 def on_connect(client, userdata, flags, rc):
 	for channel in channels:
@@ -89,96 +111,74 @@ def on_message(client, userdata, message):
 
 	print(f'Adding to DB: {message_r[-1]} with value ({ data["value"] }) and room ({ data["room"] })')
 	try:
-		socketio.emit('get_data', data)
+		new_data = get_data(message.topic[-1], message_r[-1], 1)
 	except Exception as e:
 		print(e)
-	print('SENDING')
+	print(new_data)
+	socketio.emit('get_data', new_data)
 
 client.on_connect = on_connect
 client.on_message = on_message
 
+def get_data(room, dataset='ALL', limit=10):
+	tables = {
+		"T": (Temperature, temperature_schemas),
+		"H": (Humidity, humidity_schemas),
+		"L": (Luminosity, luminosity_schemas)
+	}
+
+	response = {
+		"data": []
+	}
+
+	if dataset.upper() == 'ALL':
+		for key, table in tables.items():
+			foo = {
+				"name": key,
+				"id": room,
+				"data": None,
+				"labels": None,
+			}
+
+			foo['data'], foo['labels'] = retrive_single_data(room, key, tables, limit)
+			
+			response['data'].append(foo)
+	else:
+		foo = {
+			"name": dataset.upper(),
+			"id": room,
+			"data": None,
+			"labels": None,
+		}
+
+		foo['data'], foo['labels'] = retrive_single_data(room, dataset.upper(), tables, limit)
+		
+		response['data'].append(foo)
+
+
+	return response
+
+def retrive_single_data(room, dataset, tables, limit):
+	table = tables[dataset]
+
+	query = table[0].query.filter(table[0].room == "Room" + room).order_by(table[0].id.desc()).limit(limit)
+	result = table[1].dump(query)
+
+	data = [temp['value'] for temp in result.data][::-1]
+	labels = [temp['date'].split(' ')[1] for temp in result.data][::-1]
+
+	return (data, labels)
+
 @socketio.on('connect')
 def handleConnect():
-	print('User just got connected!')
-	data = {
-		"x": 200,
-		"y": 200,
-		"value": 69
-	}
+	print('User just got connected with id: ' + request.args.get('id'))
+	data = get_data(request.args.get('id'))
 	emit('get_data', data)
 
 
 @socketio.on('message')
 def handleMessage(msg):
 	print('Message: ' + msg)
-
-# TEMP
-from flask_marshmallow import Marshmallow
-ma = Marshmallow(app)
-class TemperatureSchema(ma.Schema):
-	class Meta:
-		fields = ('id', 'value', 'room', 'date')
-class HumiditySchema(ma.Schema):
-	class Meta:
-		fields = ('id', 'value', 'room', 'date')
-class LuminositySchema(ma.Schema):
-	class Meta:
-		fields = ('id', 'value', 'room', 'date')
-temperature_schema = TemperatureSchema(strict=True)
-temperature_schemas = TemperatureSchema(many=True, strict=True)
-humidity_schema = HumiditySchema(strict=True)
-humidity_schemas = HumiditySchema(many=True, strict=True)
-luminosity_schema = LuminositySchema(strict=True)
-luminosity_schemas = LuminositySchema(many=True, strict=True)
-
-# GETS
-@app.route('/get_temperature', methods=['GET'])
-def get_temperature():
-	params = request.query_string.decode().split('=')
-	params = dict(zip(*[iter(params)]*2))
-	if params and (params['room'] == "1" or params['room'] == "2" or params['room'] == "3"):
-		temperature = Temperature.query.filter(Temperature.room == f"Room{params['room']}").order_by(Temperature.id.desc()).limit(10)
-	else:
-		temperature = Temperature.query.order_by(Temperature.id.desc()).limit(10)
-	result = temperature_schemas.dump(temperature)
-	data = {
-		"date": [temp['date'].split(' ')[1] for temp in result.data][::-1],
-		"value": [temp['value'] for temp in result.data][::-1]
-	}
-	return json.dumps(data);
-
-@app.route('/get_humidity', methods=['GET'])
-def get_humidity():
-	params = request.query_string.decode().split('=')
-	params = dict(zip(*[iter(params)]*2))
-	if params and (params['room'] == "1" or params['room'] == "2" or params['room'] == "3"):
-		humidity = Humidity.query.filter(Humidity.room == f"Room{params['room']}").order_by(Humidity.id.desc()).limit(10)
-	else:
-		humidity = Humidity.query.order_by(Humidity.id.desc()).limit(10)
-	result = humidity_schemas.dump(humidity)
-	print(result)
-	# return jsonify(result.data)
-	data = {
-		"date": [temp['date'].split(' ')[1] for temp in result.data][::-1],
-		"value": [temp['value'] for temp in result.data][::-1]
-	}
-	return json.dumps(data);
-
-@app.route('/get_luminosity', methods=['GET'])
-def get_luminosity():
-	params = request.query_string.decode().split('=')
-	params = dict(zip(*[iter(params)]*2))
-	if params and (params['room'] == "1" or params['room'] == "2" or params['room'] == "3"):
-		luminosity = Luminosity.query.filter(Luminosity.room == f"Room{params['room']}").order_by(Luminosity.id.desc()).limit(10)
-	else:
-		luminosity = Luminosity.query.order_by(Luminosity.id.desc()).limit(10)
-	result = luminosity_schemas.dump(luminosity)
-	# return jsonify(result.data)
-	data = {
-		"date": [temp['date'].split(' ')[1] for temp in result.data][::-1],
-		"value": [temp['value'] for temp in result.data][::-1]
-	}
-	return json.dumps(data);
 
 # Run Server
 if __name__ == '__main__':
