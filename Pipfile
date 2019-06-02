@@ -13,6 +13,7 @@ marshmallow-sqlalchemy = "*"
 paho-mqtt = "*"
 requests = "*"
 flask-socketio = "*"
+yagmail = "*"
 
 [requires]
 python_version = "3.7"
