@@ -358,7 +358,8 @@ def _on_message(client, userdata, message):
 			"red": split_message[1],
 			"green": split_message[2],
 			"blue": split_message[3],
-			"room": topic
+			"room": topic,
+			"raw_room": raw_room
 		}
 		print(raw_topic.split('_'))
 		if len(raw_topic.split('_')) == 1:
