@@ -42,7 +42,7 @@ def menu():
         user_input = input('Do you want to simulate TSL \n1. YES\n2. NO\nInput: ')
         if user_input == '1':
             choices.append(12)
-        user_input = input('Do you want to Buttons and Relays TSL \n1. YES\n2. NO\nInput: ')
+        user_input = input('Do you want to use Buttons and Relays \n1. YES\n2. NO\nInput: ')
         if user_input == '1':
             choices.append(13)
     user_input = input('Do you want to simulate Arduino (A2)\n1. yes\n2. no\nInput: ')
@@ -53,7 +53,7 @@ def menu():
         user_input = input('Do you want to simulate TSL \n1. YES\n2. NO\nInput: ')
         if user_input == '1':
             choices.append(22)
-        user_input = input('Do you want to Buttons and Relays TSL \n1. YES\n2. NO\nInput: ')
+        user_input = input('Do you want to use Buttons and Relays \n1. YES\n2. NO\nInput: ')
         if user_input == '1':
             choices.append(23)
     user_input = input('Do you want to simulate ESP (E3)\n1. yes\n2. no\nInput: ')
@@ -64,7 +64,7 @@ def menu():
         user_input = input('Do you want to simulate TSL \n1. YES\n2. NO\nInput: ')
         if user_input == '1':
             choices.append(32)
-        user_input = input('Do you want to Buttons and Relays TSL \n1. YES\n2. NO\nInput: ')
+        user_input = input('Do you want to use Buttons and Relays \n1. YES\n2. NO\nInput: ')
         if user_input == '1':
             choices.append(33)
 
@@ -287,9 +287,8 @@ while True:
             client.publish(topic='Room3', payload=str(round(temp, 2)) + 'T')
             client.publish(topic='Room3', payload=str(round(hum, 2)) + 'H')
         if 32 in choices:
-            if 31 in choices:
-                print('Sending lux:', lux)
-                client.publish(topic='Room1', payload=str(round(lux, 2)) + 'L')
+            print('Sending lux:', lux)
+            client.publish(topic='Room1', payload=str(round(lux, 2)) + 'L')
     if len(A1_temp) > 100:
         A1_temp = A1_temp[80:]
         A1_hum = A1_hum[80:]
